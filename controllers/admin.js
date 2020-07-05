@@ -16,7 +16,9 @@ exports.getEditProduct = (req, res, next) => {
   if (!editMode) {
     res.redirect("/")
   } else {
-    Product.findById(req.params.id, (prod) => {
+    req.user.getProducts({ where: { id: req.params.id } }).then((prods) => {
+      // Product.findByPk(req.params.id).then((prod) => {
+      const prod = prods[0]
       if (!prod) {
         res.redirect("/")
       } else {
@@ -38,35 +40,64 @@ exports.getEditProduct = (req, res, next) => {
 exports.postEditProduct = (req, res, next) => {
 
   const { id, title, imageUrl, description, price } = req.body
-  const product = new Product(id, title, imageUrl, description, price)
-  product.save()
-  res.redirect('/admin/products');
+  Product.findByPk(id).then((prod) => {
+    console.log(prod)
+    prod.title = title;
+    prod.imageUrl = imageUrl;
+    prod.description = description;
+    prod.price = price;
+    return prod.save()
+  }).then(() => {
+    res.redirect("/")
+  }).catch((err) => {
+    console.error(err)
+
+  })
 }
 
 exports.postAddProduct = (req, res, next) => {
 
   const { title, imageUrl, description, price } = req.body
-  const product = new Product(null, title, imageUrl, description, price)
-  product.save()
-  res.redirect('/admin/products');
+  req.user.createProduct({
+    title,
+    imageUrl,
+    description,
+    price
+  }).then((result) => {
+    // console.log(result)
+    res.redirect("/")
+
+  }).catch((err) => {
+    console.error(err)
+  }) // read more from docs associationsi
 }
 exports.deleteProduct = (req, res, next) => {
 
   const { id } = req.body
-  Product.delete(id)
-  res.redirect('/admin/products');
+  Product.findByPk(id).then((prod) => {
+    return prod.destroy()
+  }).then(() => {
+    res.redirect('/admin/products');
+  }).catch((err) => {
+    console.error(err)
+
+  })
 }
 
 
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll((products) => {
-    res.render('admin/products', {
-      prods: products,
-      pageTitle: 'Admin Products',
-      path: '/admin/products',
-      hasProducts: products.length > 0,
-      activeShop: true,
-      productCSS: true
+  req.user.getProducts()
+    // Product.findAll()
+    .then((products) => {
+      res.render('admin/products', {
+        prods: products,
+        pageTitle: 'Admin Products',
+        path: '/admin/products',
+        hasProducts: products.length > 0,
+        activeShop: true,
+        productCSS: true
+      });
+    }).catch((err) => {
+      console.error(err)
     });
-  });
 }

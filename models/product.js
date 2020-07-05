@@ -1,71 +1,53 @@
-// const products = []
-const fs = require('fs')
-const path = require('path')
-const Cart = require('../models/cart')
+const Sequelize = require('sequelize');
+const sequelize = require("../util/db")
 
-const p = path.join(path.dirname(process.mainModule.filename), 'data', 'products.json')
-const getProductsFromFile = (cb) => {
-  fs.readFile(p, (err, fileContent) => {
-    if (err) {
-      cb([])
-    } else {
-      cb(JSON.parse(fileContent))
-    }
-  })
-}
 
-module.exports = class Product {
-  constructor(id, title, imageURL, description, price) {
-    this.id = id
-    this.title = title;
-    this.imageUrl = imageURL;
-    this.description = description;
-    this.price = price
-  }
+const Product = sequelize.define("product", {
+  id: { type: Sequelize.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
+  title: { type: Sequelize.STRING, allowNull: false },
+  imageUrl: { type: Sequelize.STRING, allowNull: false },
+  description: { type: Sequelize.STRING, allowNull: false },
+  price: { type: Sequelize.DOUBLE, allowNull: false }
+})
 
-  save() {
 
-    getProductsFromFile(products => {
-      if (!this.id) {
-        this.id = Math.random().toString()
-        products.push(this)
-      } else {
-        const existingIndex = products.findIndex(prod => prod.id === this.id)
-        products[existingIndex] = this
-      }
-      fs.writeFile(p, JSON.stringify(products), (err) => {
-        console.log(err)
-      })
-    })
+module.exports = Product
 
-    // reads entier file into memory
 
-  }
 
-  static fetchAll(cb) {
-    getProductsFromFile(cb)
-  }
+// const Cart = require('../models/cart')
+// const db = require("../util/db")
 
-  static delete(id) {
-    getProductsFromFile(products => {
-      const existingIndex = products.findIndex(prod => prod.id === id)
-      const product = products.find(prod => prod.id === id)
-      products.splice(existingIndex, 1)
-      fs.writeFile(p, JSON.stringify(products), (err) => {
-        if (!err) {
-          Cart.deleteProduct(id, product.price)
-        }
-        console.log(err)
-      })
-    })
-  }
+// module.exports = class Product {
+//   constructor(id, title, imageURL, description, price) {
+//     this.id = id
+//     this.title = title;
+//     this.imageUrl = imageURL;
+//     this.description = description;
+//     this.price = price
+//   }
 
-  static findById(id, cb) {
-    getProductsFromFile(products => {
-      const product = products.find(item => item.id === id)
-      cb(product)
-    })
-  }
-}
+//   save() {
 
-//  Static is used to call method of class without instansiating it
+//     return db.execute("INSERT INTO products (title, price, description, imageUrl) VALUES(?,?,?,?)", [this.title, this.price, this.description, this.imageUrl])
+
+
+//     // reads entier file into memory
+
+//   }
+
+//   static fetchAll() {
+//     return db.execute("SELECT * FROM products")
+
+//   }
+
+//   static delete(id) {
+
+//   }
+
+//   static findById(id) {
+//     return db.execute("SELECT * FROM products WHERE products.id = ?", [id])
+//   }
+// }
+
+// //  Static is used to call method of class without instansiating it
