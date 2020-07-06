@@ -1,53 +1,60 @@
-const Sequelize = require('sequelize');
-const sequelize = require("../util/db")
+// const Sequelize = require('sequelize');
+// const sequelize = require("../util/db")
 
 
-const Product = sequelize.define("product", {
-  id: { type: Sequelize.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
-  title: { type: Sequelize.STRING, allowNull: false },
-  imageUrl: { type: Sequelize.STRING, allowNull: false },
-  description: { type: Sequelize.STRING, allowNull: false },
-  price: { type: Sequelize.DOUBLE, allowNull: false }
-})
+// const Product = sequelize.define("product", {
+//   id: { type: Sequelize.INTEGER, autoIncrement: true, allowNull: false, primaryKey: true },
+//   title: { type: Sequelize.STRING, allowNull: false },
+//   imageUrl: { type: Sequelize.STRING, allowNull: false },
+//   description: { type: Sequelize.STRING, allowNull: false },
+//   price: { type: Sequelize.DOUBLE, allowNull: false }
+// })
 
 
-module.exports = Product
+// module.exports = Product
 
 
+const mongoddb = require("mongodb")
 
-// const Cart = require('../models/cart')
-// const db = require("../util/db")
+const { getDB } = require("../util/db")
 
-// module.exports = class Product {
-//   constructor(id, title, imageURL, description, price) {
-//     this.id = id
-//     this.title = title;
-//     this.imageUrl = imageURL;
-//     this.description = description;
-//     this.price = price
-//   }
+module.exports = class Product {
+  constructor(title, imageURL, description, price) {
+    this.title = title;
+    this.imageUrl = imageURL;
+    this.description = description;
+    this.price = price
+  }
 
-//   save() {
+  save() {
+    const db = getDB()
+    return db.collection('products').insertOne({
+      title: this.title,
+      imageUrl: this.imageUrl,
+      description: this.description,
+      price: this.price,
+    })
+  }
 
-//     return db.execute("INSERT INTO products (title, price, description, imageUrl) VALUES(?,?,?,?)", [this.title, this.price, this.description, this.imageUrl])
+  static fetchAll() {
+    const db = getDB()
+    return db.collection('products').find().toArray()
 
+  }
 
-//     // reads entier file into memory
+  static delete(id) {
 
-//   }
+  }
 
-//   static fetchAll() {
-//     return db.execute("SELECT * FROM products")
-
-//   }
-
-//   static delete(id) {
-
-//   }
-
-//   static findById(id) {
-//     return db.execute("SELECT * FROM products WHERE products.id = ?", [id])
-//   }
-// }
+  static findById(id) {
+    const db = getDB()
+    return db.collection('products').find({ _id: new mongoddb.ObjectID(id) }).next().then(prod => {
+      console.log(prod)
+      return prod
+    }).catch(err => {
+      console.log("error", err)
+    })
+  }
+}
 
 // //  Static is used to call method of class without instansiating it

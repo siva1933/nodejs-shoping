@@ -1,18 +1,26 @@
-const Sequelize = require('sequelize');
 
-const sequelize = new Sequelize("node-complete", "root", "siva", {
-  dialect: "mysql",
-  host: "localhost"
-})
+const MongoClient = require("mongodb").MongoClient;
+const uri = "mongodb+srv://siva_1933:C26qgYsY6Akb7QR@demoapps.qaxs4.mongodb.net/shoping-app?retryWrites=true&w=majority";
+const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-// const mysql = require('mysql2')
+let _db;
 
-// const pool = mysql.createPool({
-//   host: "localhost",
-//   user: "root",
-//   database: 'node-complete',
-//   password: "siva"
-// })
+const mongoConnect = (cb) => {
+  client.connect().then(client => {
+    _db = client.db()
+    cb(_db, null)
+  }).catch((err) => {
+    cb(null, err)
+  })
+}
 
-// module.exports = pool.promise();
-module.exports = sequelize;
+const getDB = () => {
+  if (_db) {
+    return _db;
+  }
+
+  throw 'No Database Found!'
+}
+
+exports.mongoConnect = mongoConnect;
+exports.getDB = getDB;
