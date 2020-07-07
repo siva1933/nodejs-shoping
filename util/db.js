@@ -1,5 +1,6 @@
 
 const MongoClient = require("mongodb").MongoClient;
+const ObjectId = require("mongodb").ObjectId;
 const uri = "mongodb+srv://siva_1933:C26qgYsY6Akb7QR@demoapps.qaxs4.mongodb.net/shoping-app?retryWrites=true&w=majority";
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
@@ -24,3 +25,4 @@ const getDB = () => {
 
 exports.mongoConnect = mongoConnect;
 exports.getDB = getDB;
+exports.ObjectId = ObjectId;
