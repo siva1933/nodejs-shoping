@@ -26,3 +26,4 @@ const getDB = () => {
 exports.mongoConnect = mongoConnect;
 exports.getDB = getDB;
 exports.ObjectId = ObjectId;
+exports.uri = uri;

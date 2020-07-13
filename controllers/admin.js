@@ -2,12 +2,14 @@ const Product = require("../models/product")
 
 
 exports.getAddProduct = (req, res, next) => {
+  const isLoggedIn = req.session.isLoggedIn
   res.render('admin/add-product', {
     pageTitle: 'Add Product',
     path: '/admin/add-product',
     formsCSS: true,
     productCSS: true,
-    activeAddProduct: true
+    activeAddProduct: true,
+    isAuthenticated: isLoggedIn
   });
 }
 
@@ -34,6 +36,8 @@ exports.getEditProduct = (req, res, next) => {
     res.redirect("/")
   } else {
     Product.findById(req.params.id).then((prods) => {
+      const isLoggedIn = req.session.isLoggedIn
+
       // Product.findByPk(req.params.id).then((prod) => {
       const prod = prods
       if (!prod) {
@@ -46,6 +50,7 @@ exports.getEditProduct = (req, res, next) => {
           productCSS: true,
           activeAddProduct: true,
           product: prod,
+          isAuthenticated: isLoggedIn,
           editing: editMode
         });
       }
@@ -57,16 +62,15 @@ exports.getEditProduct = (req, res, next) => {
 exports.postEditProduct = (req, res, next) => {
 
   const { id, title, imageUrl, description, price } = req.body
-  const prod = new Product(
-    title,
-    imageUrl,
-    description,
-    price,
-    req.user._id
-  )
 
-  prod.updateOne(id).then(() => {
-    res.redirect("/")
+  Product.findById(id).then((product) => {
+    product.title = title
+    product.imageUrl = imageUrl
+    product.description = description
+    product.price = price
+    product.save().then(() => {
+      res.redirect("/")
+    })
   }).catch((err) => {
     console.error(err)
 
@@ -77,17 +81,17 @@ exports.postAddProduct = (req, res, next) => {
 
   const { title, imageUrl, description, price } = req.body
   const prod = new Product(
-    title,
-    imageUrl,
-    description,
-    price,
-    req.user._id
+    {
+      title,
+      imageUrl,
+      description,
+      price,
+      userId: req.user._id
+    }
   )
 
-  prod.save().then((result) => {
-    // console.log(result)
+  prod.save().then(() => {
     res.redirect("/")
-
   }).catch((err) => {
     console.error(err)
   }) // read more from docs associationsi
@@ -96,7 +100,9 @@ exports.postAddProduct = (req, res, next) => {
 exports.deleteProduct = (req, res, next) => {
 
   const { id } = req.body
-  Product.delete(id).then(() => {
+  Product.findById(id).then((prod) => {
+    return prod.remove()
+  }).then(() => {
     res.redirect('/admin/products');
   }).catch((err) => {
     console.error(err)
@@ -106,7 +112,12 @@ exports.deleteProduct = (req, res, next) => {
 
 
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
+  const isLoggedIn = req.session.isLoggedIn
+
+  Product.find()
+    // .select(" title price")
+    // .populate('userId','name -_id')
+    // .populate('userId')
     .then((products) => {
       res.render('admin/products', {
         prods: products,
@@ -114,7 +125,8 @@ exports.getProducts = (req, res, next) => {
         path: '/admin/products',
         hasProducts: products.length > 0,
         activeShop: true,
-        productCSS: true
+        productCSS: true,
+        isAuthenticated: isLoggedIn
       });
     }).catch((err) => {
       console.error(err)

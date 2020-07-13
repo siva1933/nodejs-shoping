@@ -1,3 +1,13 @@
+const mongoose = require("mongoose")
+const Schema = mongoose.Schema
+
+const productSchema = new Schema({
+  title: { type: String, required: true },
+  imageUrl: String,
+  description: String,
+  price: Number,
+  userId: { type: Schema.Types.ObjectId, ref: "User" }
+})
 // const Sequelize = require('sequelize');
 // const sequelize = require("../util/db")
 
@@ -11,67 +21,67 @@
 // })
 
 
-// module.exports = Product
+module.exports = mongoose.model("Product", productSchema)
 
 
-const mongoddb = require("mongodb")
+// const mongoddb = require("mongodb")
 
-const { getDB } = require("../util/db")
+// const { getDB } = require("../util/db")
 
-module.exports = class Product {
-  constructor(title, imageURL, description, price, uid) {
-    this.title = title;
-    this.imageUrl = imageURL;
-    this.description = description;
-    this.price = price;
-    this.uid = uid;
-  }
+// module.exports = class Product {
+//   constructor(title, imageURL, description, price, uid) {
+//     this.title = title;
+//     this.imageUrl = imageURL;
+//     this.description = description;
+//     this.price = price;
+//     this.uid = uid;
+//   }
 
-  save() {
-    const db = getDB()
-    return db.collection('products').insertOne({
-      title: this.title,
-      imageUrl: this.imageUrl,
-      description: this.description,
-      price: this.price,
-      userId: this.uid
-    })
-  }
+//   save() {
+//     const db = getDB()
+//     return db.collection('products').insertOne({
+//       title: this.title,
+//       imageUrl: this.imageUrl,
+//       description: this.description,
+//       price: this.price,
+//       userId: this.uid
+//     })
+//   }
 
-  updateOne(id) {
-    const db = getDB()
-    return db.collection('products').updateOne({ _id: new mongoddb.ObjectID(id) }, {
-      $set: {
-        title: this.title,
-        imageUrl: this.imageUrl,
-        description: this.description,
-        price: this.price,
-        userId: this.uid
+//   updateOne(id) {
+//     const db = getDB()
+//     return db.collection('products').updateOne({ _id: new mongoddb.ObjectID(id) }, {
+//       $set: {
+//         title: this.title,
+//         imageUrl: this.imageUrl,
+//         description: this.description,
+//         price: this.price,
+//         userId: this.uid
 
-      }
-    })
-  }
+//       }
+//     })
+//   }
 
-  static fetchAll() {
-    const db = getDB()
-    return db.collection('products').find().toArray()
+//   static fetchAll() {
+//     const db = getDB()
+//     return db.collection('products').find().toArray()
 
-  }
+//   }
 
-  static delete(id) {
-    const db = getDB()
-    return db.collection('products').deleteOne({ _id: new mongoddb.ObjectID(id) })
-  }
+//   static delete(id) {
+//     const db = getDB()
+//     return db.collection('products').deleteOne({ _id: new mongoddb.ObjectID(id) })
+//   }
 
-  static findById(id) {
-    const db = getDB()
-    return db.collection('products').findOne({ _id: new mongoddb.ObjectID(id) }).then(prod => {
-      console.log(prod)
-      return prod
-    }).catch(err => {
-      console.log("error", err)
-    })
-  }
-}
+//   static findById(id) {
+//     const db = getDB()
+//     return db.collection('products').findOne({ _id: new mongoddb.ObjectID(id) }).then(prod => {
+//       console.log(prod)
+//       return prod
+//     }).catch(err => {
+//       console.log("error", err)
+//     })
+//   }
+// }
 
 // //  Static is used to call method of class without instansiating it
