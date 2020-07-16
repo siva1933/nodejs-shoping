@@ -40,6 +40,8 @@
             <% } else { %>
             <li class="main-header__item">
                 <form action="/logout" method="POST">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                     <button class="<%= path === '/logout' ? 'active btn' : 'btn' %>" type="submit">
                         Log Out
                     </button>
@@ -87,6 +89,8 @@
         <% } else { %>
         <li class="main-header__item">
             <form action="/logout" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
                 <button class="<%= path === '/logout' ? 'active btn' : 'btn' %>" type="submit">
                     Log Out
                 </button>

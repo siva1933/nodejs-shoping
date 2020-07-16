@@ -7,7 +7,7 @@
   <%- include('../includes/navigation.ejs') %>
 
   <main>
-    <form class="signup-form" action="/signup" method="POST">
+    <form class="login-form" action="/reset-password" method="POST">
       <% if(errorMsg) { %>
       <div class="user-message user-message--error"><%= errorMsg %></div>
       <% } %>
@@ -15,18 +15,10 @@
         <label for="title">E-mail</label>
         <input type="email" name="email" id="email">
       </div>
-      <div class="form-control">
-        <label for="password">Password</label>
-        <input type="password" name="password" id="password">
-      </div>
-      <div class="form-control">
-        <label for="password">Confirm Password</label>
-        <input type="password" name="confirmPassword" id="confirmPassword">
-      </div>
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
       <button class="btn" type="submit">
-        Sign Up
+        Reset Password
       </button>
     </form>
   </main>

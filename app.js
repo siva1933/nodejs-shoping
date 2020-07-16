@@ -1,10 +1,14 @@
 const path = require('path');
 
 const express = require('express');
+const csrf = require('csurf');
+const flash = require('connect-flash');
+
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
 const mongoose = require('mongoose');
 const { uri } = require("./util/db");
+
 const store = new MongoDBStore({
   uri,
   collection: "sessions"
@@ -13,13 +17,12 @@ const bodyParser = require('body-parser');
 // const expressHbs = require('express-handlebars');
 const errorController = require("./controllers/error")
 
-const app = express();
-// const Product = require("./models/product")
 const User = require("./models/user")
-// const Cart = require("./models/cart")
-// const CartItem = require("./models/cart-item")
-// const Order = require("./models/order")
-// const OrderItem = require("./models/order-item")
+
+const app = express();
+
+const csrfProtection = csrf();
+
 
 
 app.set('view engine', 'ejs');
@@ -40,14 +43,27 @@ app.use(session({
   store
 }))
 
+app.use(csrfProtection)
+app.use(flash())
+
 app.use((req, res, next) => {
-  User.findById("5f054599df5f1730aaaa45b4").then((user) => {
-    req.user = user
-    
+  res.locals.csrfToken = req.csrfToken()
+  next()
+})
+
+
+app.use((req, res, next) => {
+  if (!req.session.user) {
     next()
-  }).catch((err) => {
-    console.log(err)
-  })
+  } else {
+    User.findOne({ email: req.session.user.email }).then((user) => {
+      req.user = user
+      next()
+    }).catch((err) => {
+      console.log(err)
+    })
+  }
+
 });
 
 app.use('/admin', adminRoutes);
@@ -57,12 +73,6 @@ app.use(authRoutes);
 app.use(errorController.get404);
 
 mongoose.connect(uri).then(() => {
-  User.findOne().then(user => {
-    if (!user) {
-      const user = new User({ name: "siva", email: "siva@vitwit.com", cart: { items: [] } })
-      user.save()
-    }
-  });
   app.listen(3000)
 }).catch((err) => {
   console.error(err)

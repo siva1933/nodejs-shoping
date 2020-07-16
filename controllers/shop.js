@@ -180,7 +180,7 @@ exports.postOrder = (req, res, next) => {
       products,
       user: {
         userId: req.user,
-        name: req.user.name
+        email: req.user.email
       }
     })
 

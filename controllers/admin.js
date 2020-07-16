@@ -1,4 +1,5 @@
 const Product = require("../models/product")
+const { ObjectId } = require("../util/db")
 
 
 exports.getAddProduct = (req, res, next) => {
@@ -64,6 +65,9 @@ exports.postEditProduct = (req, res, next) => {
   const { id, title, imageUrl, description, price } = req.body
 
   Product.findById(id).then((product) => {
+    if (product.userId.toString() !== req.user._id.toString()) {
+      return res.redirect("/")
+    }
     product.title = title
     product.imageUrl = imageUrl
     product.description = description
@@ -100,9 +104,7 @@ exports.postAddProduct = (req, res, next) => {
 exports.deleteProduct = (req, res, next) => {
 
   const { id } = req.body
-  Product.findById(id).then((prod) => {
-    return prod.remove()
-  }).then(() => {
+  Product.deleteOne({ _id: id, userId: req.user._id }).then(() => {
     res.redirect('/admin/products');
   }).catch((err) => {
     console.error(err)
@@ -114,7 +116,7 @@ exports.deleteProduct = (req, res, next) => {
 exports.getProducts = (req, res, next) => {
   const isLoggedIn = req.session.isLoggedIn
 
-  Product.find()
+  Product.find({ userId: new ObjectId(req.user._id) })
     // .select(" title price")
     // .populate('userId','name -_id')
     // .populate('userId')
