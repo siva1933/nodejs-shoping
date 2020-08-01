@@ -16,5 +16,8 @@ router.get('/orders', isAuth, shopController.getOrders);
 // router.get('/products/delete');
 
 router.get('/products/:productId', isAuth, shopController.getProduct);
+router.get('/orders/:orderId', isAuth, shopController.getInvoice);
+router.get('/checkout', isAuth, adminController.getCheckout);
+
 
 module.exports = router;

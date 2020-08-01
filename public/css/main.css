@@ -209,9 +209,33 @@ form {
   text-align: center;
 }
 
+input.invalid,
+textarea.invalid {
+  border-color: red !important;
+}
+
 .user-message--error {
   border-color: red;
   background-color: rgb(255, 176, 176);
+}
+
+.pagination {
+  text-align: center;
+}
+
+.pagination a {
+  text-decoration: none;
+  color: #00695c;
+  padding: 0.5rem;
+  border: 1px solid #00695c;
+  margin: 0 1rem;
+}
+
+.pagination a:hover,
+.pagination a.active,
+.pagination a:active {
+  background: #00695c;
+  color: #fff;
 }
 
 @media (min-width: 768px) {

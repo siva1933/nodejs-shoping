@@ -7,22 +7,29 @@
     <%- include('../includes/navigation.ejs') %>
 
     <main>
-        <form class="product-form" action="/admin/add-product" method="POST">
+        <form class="product-form" action="/admin/add-product" method="POST" enctype="multipart/form-data">
+            <% if(errorMsg) { %>
+            <div class="user-message user-message--error"><%= errorMsg %></div>
+            <% } %>
             <div class="form-control">
                 <label for="title">Title</label>
-                <input type="text" name="title" id="title">
+                <input class="<%= validationErrors.find(e=>e.param === 'title')?'invalid':''%>" type="text" name="title" value="<%= oldInput.title %>" id="title">
             </div>
-            <div class="form-control">
+            <!-- <div class="form-control">
                 <label for="imageUrl">Image URL</label>
-                <input type="text" name="imageUrl" id="imageUrl">
+                <input class="<%= validationErrors.find(e=>e.param === 'imageUrl')?'invalid':''%>" type="text" name="imageUrl" value="<%= oldInput.imageUrl %>" id="imageUrl">
+            </div> -->
+            <div class="form-control">
+                <label for="image">Image</label>
+                <input type="file" name="image" id="image">
             </div>
             <div class="form-control">
                 <label for="price">Price</label>
-                <input type="number" name="price" id="price" step="0.01">
+                <input class="<%= validationErrors.find(e=>e.param === 'price')?'invalid':''%>" type="number" name="price" value="<%= oldInput.price %>" id="price" step="0.01">
             </div>
             <div class="form-control">
                 <label for="description">Description</label>
-                <textarea name="description" id="description" rows="5"></textarea>
+                <textarea class="<%= validationErrors.find(e=>e.param === 'description')?'invalid':''%>" name="description" value="<%= oldInput.description %>" id="description" rows="5"></textarea>
             </div>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
             <button class="btn" type="submit">Add Product</button>

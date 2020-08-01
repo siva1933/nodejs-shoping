@@ -19,7 +19,9 @@ exports.getLogin = (req, res, next) => {
     path: "/login",
     pageTitle: "Login",
     isAuthenticated: false,
-    errorMsg: msg
+    errorMsg: msg,
+    validationErrors: [],
+    oldInput: {}
   })
 }
 
@@ -77,7 +79,9 @@ exports.getSignUp = (req, res, next) => {
     path: "/signup",
     pageTitle: "Sign Up",
     errorMsg: msg,
-    isAuthenticated: false
+    isAuthenticated: false,
+    oldInput: {},
+    validationErrors: []
   })
 }
 
@@ -87,6 +91,22 @@ exports.postLogin = (req, res, next) => {
   // res.setHeader("Set-Cookie", "loggedIn=true")
   // res.setHeader("Set-Cookie", "loggedIn=true; Max-Age=30000; Expries=HTML Date; Secure; HTTPOnly")
   // Secure set only for https
+
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(422).render('auth/login', {
+      path: "/login",
+      pageTitle: "Login",
+      errorMsg: errors.array()[0].msg,
+      isAuthenticated: false,
+      oldInput: {
+        email, password
+      },
+      validationErrors: errors.array()
+
+    })
+  }
+
   User.findOne({ email }).then((user) => {
     if (user) {
       bcrypt.compare(password, user.password).then((bool) => {
@@ -106,8 +126,6 @@ exports.postLogin = (req, res, next) => {
           return res.redirect("/login")
         }
       })
-
-
     } else {
       req.flash("error", "User Do Not Exist.")
 
@@ -128,33 +146,31 @@ exports.postSignUp = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(422).render('auth/signup', {
       path: "/signup",
-      pageTitle: "Signup",
-      errorMsg: errors.array()[0].msg
+      pageTitle: "Sign Up",
+      errorMsg: errors.array()[0].msg,
+      isAuthenticated: false,
+      oldInput: {
+        email, password, confirmPassword
+      },
+      validationErrors: errors.array()
     })
   }
-  User.findOne({ email }).then(userDoc => {
-    if (userDoc && userDoc.email) {
-      req.flash("error", "Email already exists")
+  bcrypt.hash(password, 12)
+    .then((hashedPwd) => {
+      const user = new User({ email, password: hashedPwd, cart: { items: [] } })
+      return user.save()
+    }).then(() => {
 
-      return res.redirect("/signup")
-    } else {
-      return bcrypt.hash(password, 12).then((hashedPwd) => {
-        const user = new User({ email, password: hashedPwd, cart: { items: [] } })
-        return user.save()
-      }).then(() => {
-
-        res.redirect("/login")
-        return sgMail.send({
-          to: email,
-          from: "shop@nodejsapp.com",
-          subject: "Signup Successfull!",
-          html: '<h1>Welcome to shop.</h1>'
-        })
+      res.redirect("/login")
+      return sgMail.send({
+        to: email,
+        from: "shop@nodejsapp.com",
+        subject: "Signup Successfull!",
+        html: '<h1>Welcome to shop.</h1>'
       })
-    }
-  }).catch((err) => {
-    console.error(err)
-  })
+    }).catch(err => {
+      console.log(err)
+    })
 }
 
 exports.postLogOut = (req, res, next) => {
@@ -192,7 +208,7 @@ exports.postReset = (req, res, next) => {
       })
       res.redirect("/login")
     }).catch(err => {
-      console.error(err)
+      return next(new Error(err))
     })
   })
 }
@@ -217,6 +233,6 @@ exports.postNewPassword = (req, res, next) => {
   }).then(() => {
     res.redirect("/login")
   }).catch(err => {
-    console.error(err)
+    return next(new Error(err))
   })
 }
