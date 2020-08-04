@@ -1,35 +1,189 @@
+const { validationResult } = require('express-validator/check')
+const path = require("path")
+const fs = require("fs")
+const Post = require("../models/post")
+
+exports.getPost = (req, res, next) => {
+  const { postId } = req.params
+
+  Post.findById(postId).then((post) => {
+
+    if (!post) {
+      const err = new Error("No Post Found!")
+      err.statusCode = 404
+      throw err
+
+      // throw err will take to catch from then
+    }
+    res.status(200).json({
+      post
+    });
+  }).catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500
+    }
+    next(err)
+  })
+};
+
 exports.getPosts = (req, res, next) => {
-  res.status(200).json({
-    posts: [
-      {
-        _id: '1',
-        title: 'First Post',
-        content: 'This is the first post!',
-        imageUrl: 'images/duck.jpg',
-        creator: {
-          name: 'Maximilian'
-        },
-        createdAt: new Date()
-      }
-    ]
-  });
+  const page = req.query.page || 1
+  const perPage = 2;
+  let totalItems;
+  Post.find().countDocuments().then(count => {
+    totalItems = count
+
+    return Post.find().skip((page - 1) * perPage).limit(2)
+
+  }).then((posts) => {
+    res.status(200).json({
+      posts,
+      totalItems
+    });
+  }).catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500
+    }
+    next(err)
+  })
+
 };
 
 exports.createPost = (req, res, next) => {
+
+  const errors = validationResult(req)
   const title = req.body.title;
   const content = req.body.content;
   // Create post in db
-  res.status(201).json({
-    message: 'Post created successfully!',
-    post: {
-      _id: new Date().toISOString(), 
-      title: title, 
-      content: content, 
-      imageUrl: 'images/duck.jpg',
-      creator: {
-        name: 'Maximilian'
-      },
-      createdAt: new Date()
+  if (!errors.isEmpty()) {
+    const error = new Error("Validation Failed")
+    error.errors = errors.array()
+    error.statusCode = 422
+    throw error
+  }
+
+  if (!req.file) {
+    const error = new Error("Image not provided")
+    error.statusCode = 422
+    throw error
+
+  }
+
+  const post = new Post({
+    title: title,
+    content: content,
+    imageUrl: req.file.path,
+    creator: {
+      name: 'Maximilian'
+    },
+  })
+
+  post.save().then((data) => {
+    res.status(201).json({
+      message: 'Post created successfully!',
+      post: data
+    });
+  }).catch((err) => {
+    // db error status code must be 500
+    if (!err.statusCode) {
+      err.statusCode = 500
     }
-  });
+    next(err)
+  })
+
 };
+
+
+exports.updatePosts = (req, res, next) => {
+  const errors = validationResult(req)
+  const title = req.body.title;
+  const content = req.body.content;
+  let imageUrl = req.body.image;
+  const postId = req.params.postId
+  // Create post in db
+  if (!errors.isEmpty()) {
+    const error = new Error("Validation Failed")
+    error.errors = errors.array()
+    error.statusCode = 422
+    throw error
+  }
+
+
+
+  if (req.file) {
+    imageUrl = req.file.path
+  }
+
+  if (!imageUrl) {
+    const error = new Error("Image not provided")
+    error.statusCode = 422
+    throw error
+  }
+
+
+  Post.findById(postId).then(post => {
+    if (!post) {
+      const err = new Error("No Post Found!")
+      err.statusCode = 404
+      throw err
+
+      // throw err will take to catch from then
+    }
+
+    if (imageUrl !== post.imageUrl) {
+      clearImage(post.imageUrl)
+    }
+
+
+    post.title = title
+    post.content = content
+    post.imageUrl = imageUrl
+
+    return post.save()
+  }).then((result) => {
+    res.status(200).json({
+      message: "Post updated!",
+      post: result
+    })
+  }).catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500
+    }
+    next(err)
+  })
+}
+
+exports.deletePost = (req, res, next) => {
+  const { postId } = req.params
+
+  Post.findById(postId).then(post => {
+    if (!post) {
+      const err = new Error("No Post Found!")
+      err.statusCode = 404
+      throw err
+
+      // throw err will take to catch from then
+    }
+    // check the logged in user
+    clearImage(post.imageUrl)
+
+    return Post.findByIdAndRemove(postId)
+  }).then((result) => {
+    res.status(200).json({
+      message: "Post deleted!",
+    })
+  }).catch(err => {
+    if (!err.statusCode) {
+      err.statusCode = 500
+    }
+    next(err)
+  })
+}
+
+const clearImage = (filePath) => {
+  filePath = path.join(__dirname, "-", filePath)
+
+  fs.unlink(filePath, err => console.log(err))
+
+}
+
