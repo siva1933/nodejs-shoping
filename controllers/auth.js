@@ -1,22 +1,44 @@
 const { validationResult } = require('express-validator/check')
 const bcrypt = require("bcryptjs")
 const User = require("../models/user")
+const jwt = require("jsonwebtoken")
 
 exports.login = (req, res, next) => {
   const { email, password } = req.body
+  let loadedUser
+  User.findOne({ email }).then((user) => {
 
-  Post.findById(postId).then((post) => {
-
-    if (!post) {
-      const err = new Error("No Post Found!")
+    if (!user) {
+      const err = new Error("No User Found!")
       err.statusCode = 404
       throw err
 
       // throw err will take to catch from then
     }
+
+    loadedUser = user
+    return bcrypt.compare(password, user.password)
+  }).then(isEqual => {
+    if (!isEqual) {
+      const err = new Error("Passwords Mismatch!")
+      err.statusCode = 422
+      throw err
+
+      // throw err will take to catch from then
+    }
+
+    const token = jwt.sign({
+      email: loadedUser.email,
+      userId: loadedUser._id.toString()
+    }, "supersecrettoken", {
+      expiresIn: '1h'
+    })
+
     res.status(200).json({
-      post
-    });
+      token,
+      userId: loadedUser._id.toString()
+    })
+
   }).catch(err => {
     if (!err.statusCode) {
       err.statusCode = 500

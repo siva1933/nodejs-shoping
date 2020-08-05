@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const uri = "mongodb+srv://siva_1933:C26qgYsY6Akb7QR@demoapps.qaxs4.mongodb.net/posts-db?retryWrites=true&w=majority";
 const feedRoutes = require('./routes/feed');
 const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/user');
 
 const multer = require('multer');
 
@@ -45,6 +46,7 @@ app.use((req, res, next) => {
 
 app.use('/feed', feedRoutes);
 app.use('/auth', authRoutes);
+app.use(userRoutes);
 
 app.use((error, req, res, next) => {
   res.status(error.statusCode || 422).json({
