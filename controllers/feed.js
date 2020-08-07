@@ -1,8 +1,10 @@
 const { validationResult } = require('express-validator/check')
 const path = require("path")
 const fs = require("fs")
+const io = require("../socket")
 const Post = require("../models/post")
 const User = require("../models/user")
+
 
 exports.getPost = (req, res, next) => {
   const { postId } = req.params
@@ -27,36 +29,32 @@ exports.getPost = (req, res, next) => {
   })
 };
 
-exports.getPosts = (req, res, next) => {
+exports.getPosts = async (req, res, next) => {
   const page = req.query.page || 1
   const perPage = 2;
-  let totalItems;
-  Post.find().countDocuments().then(count => {
-    totalItems = count
 
-    return Post.find().skip((page - 1) * perPage).limit(2)
-
-  }).then((posts) => {
+  try {
+    const totalItems = await Post.find().countDocuments()
+    const posts = await Post.find().populate('creator').skip((page - 1) * perPage).limit(2)
     res.status(200).json({
       posts,
       totalItems
     });
-  }).catch(err => {
+  } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500
     }
     next(err)
-  })
+  }
 
 };
 
-exports.createPost = (req, res, next) => {
+exports.createPost = async (req, res, next) => {
 
   const errors = validationResult(req)
   const title = req.body.title;
   const content = req.body.content;
-  let posts;
-  let creator;
+
   // Create post in db
   if (!errors.isEmpty()) {
     const error = new Error("Validation Failed")
@@ -72,6 +70,8 @@ exports.createPost = (req, res, next) => {
 
   }
 
+
+
   const post = new Post({
     title: title,
     content: content,
@@ -79,14 +79,17 @@ exports.createPost = (req, res, next) => {
     creator: req.userId
   })
 
-  post.save().then((data) => {
-    posts = data
-    return User.findById(req.userId)
-  }).then(user => {
-    creator = user
-    user.posts.push(posts)
-    return user.save()
-  }).then(result => {
+  try {
+    let posts = await post.save()
+    let creator = await User.findById(req.userId)
+    creator.posts.push(posts)
+    await creator.save()
+
+    io.getIo().emit('posts', {
+      action: "CREATE",
+      post: { ...post._doc, creator: { _id: req.userId, name: creator.name } }
+    })
+
     res.status(201).json({
       message: "Post created!",
       post: post,
@@ -96,18 +99,18 @@ exports.createPost = (req, res, next) => {
       }
     })
 
-  }).catch((err) => {
+  } catch (err) {
     // db error status code must be 500
     if (!err.statusCode) {
       err.statusCode = 500
     }
     next(err)
-  })
+  }
 
 };
 
 
-exports.updatePosts = (req, res, next) => {
+exports.updatePosts = async (req, res, next) => {
   const errors = validationResult(req)
   const title = req.body.title;
   const content = req.body.content;
@@ -121,8 +124,6 @@ exports.updatePosts = (req, res, next) => {
     throw error
   }
 
-
-
   if (req.file) {
     imageUrl = req.file.path
   }
@@ -133,8 +134,9 @@ exports.updatePosts = (req, res, next) => {
     throw error
   }
 
+  try {
+    const post = await Post.findById(postId).populate("creator")
 
-  Post.findById(postId).then(post => {
     if (!post) {
       const err = new Error("No Post Found!")
       err.statusCode = 404
@@ -158,18 +160,23 @@ exports.updatePosts = (req, res, next) => {
     post.content = content
     post.imageUrl = imageUrl
 
-    return post.save()
-  }).then((result) => {
+    let result = await post.save()
+
+    io.getIo().emit('posts', {
+      action: "UPDATE",
+      post: {...result._doc}
+    })
+
     res.status(200).json({
       message: "Post updated!",
       post: result
     })
-  }).catch(err => {
+  } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500
     }
     next(err)
-  })
+  }
 }
 
 exports.deletePost = (req, res, next) => {
