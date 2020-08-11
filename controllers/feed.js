@@ -35,7 +35,7 @@ exports.getPosts = async (req, res, next) => {
 
   try {
     const totalItems = await Post.find().countDocuments()
-    const posts = await Post.find().populate('creator').skip((page - 1) * perPage).limit(2)
+    const posts = await Post.find().populate('creator').sort({ createdAt: -1 }).skip((page - 1) * perPage).limit(2)
     res.status(200).json({
       posts,
       totalItems
@@ -145,7 +145,7 @@ exports.updatePosts = async (req, res, next) => {
       // throw err will take to catch from then
     }
 
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       const err = new Error("Unauthorized!")
       err.statusCode = 403
       throw err
@@ -164,7 +164,7 @@ exports.updatePosts = async (req, res, next) => {
 
     io.getIo().emit('posts', {
       action: "UPDATE",
-      post: {...result._doc}
+      post: { ...result._doc }
     })
 
     res.status(200).json({
@@ -179,10 +179,10 @@ exports.updatePosts = async (req, res, next) => {
   }
 }
 
-exports.deletePost = (req, res, next) => {
+exports.deletePost = async (req, res, next) => {
   const { postId } = req.params
-
-  Post.findById(postId).then(post => {
+  try {
+    const post = await Post.findById(postId)
     if (!post) {
       const err = new Error("No Post Found!")
       err.statusCode = 404
@@ -200,22 +200,24 @@ exports.deletePost = (req, res, next) => {
     // check the logged in user
     clearImage(post.imageUrl)
 
-    return Post.findByIdAndRemove(postId)
-  }).then((result) => {
-    return User.findById(req.userId)
-  }).then((user) => {
+    await Post.findByIdAndRemove(postId)
+    const user = await User.findById(req.userId);
+
     user.posts.pull(postId)
-    return user.save()
-  }).then((result) => {
+    await user.save()
+    io.getIo().emit("posts", {
+      action: "DELETE",
+      post: postId
+    })
     res.status(200).json({
       message: "Post deleted!",
     })
-  }).catch(err => {
+  } catch (err) {
     if (!err.statusCode) {
       err.statusCode = 500
     }
     next(err)
-  })
+  }
 }
 
 const clearImage = (filePath) => {
