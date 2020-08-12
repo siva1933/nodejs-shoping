@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon app.js",
+    "start": "PORT=3030 MONGO_PASSWORD=C26qgYsY6Akb7QR MONGO_USER=siva_1933 MONGO_DB=shoping-app node app.js",
+    "start:dev": "PORT=3030 MONGO_PASSWORD=C26qgYsY6Akb7QR MONGO_USER=siva_1933 MONGO_DB=shoping-app nodemon app.js",
     "start-server": "node app.js"
   },
   "author": "Maximilian Schwarzmüller",

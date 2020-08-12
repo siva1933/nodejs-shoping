@@ -1,9 +1,9 @@
 
 const MongoClient = require("mongodb").MongoClient;
 const ObjectId = require("mongodb").ObjectId;
-const uri = "mongodb+srv://siva_1933:C26qgYsY6Akb7QR@demoapps.qaxs4.mongodb.net/shoping-app?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@demoapps.qaxs4.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-
+console.log(process.env.PORT)
 let _db;
 
 const mongoConnect = (cb) => {

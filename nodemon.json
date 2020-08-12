@@ -1,0 +1,8 @@
+{
+  "env": {
+    "PORT": 3030,
+    "MONGO_PASSWORD": "C26qgYsY6Akb7QR",
+    "MONGO_USER": "siva_1933",
+    "MONGO_DB": "shoping-app"
+  }
+}

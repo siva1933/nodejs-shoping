@@ -113,7 +113,7 @@ app.use((error, req, res, next) => {
 })
 
 mongoose.connect(uri).then(() => {
-  app.listen(3001)
+  app.listen(process.env.PORT || 3000)
 }).catch((err) => {
   console.error(err)
 })
