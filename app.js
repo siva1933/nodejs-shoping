@@ -3,6 +3,8 @@ const path = require('path');
 const express = require('express');
 const csrf = require('csurf');
 const flash = require('connect-flash');
+const helmet = require("helmet");
+const compression = require('compression');
 
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
@@ -51,7 +53,8 @@ const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
 
 
-
+app.use(helmet())
+app.use(compression())
 app.use(bodyParser.urlencoded({ extended: false }));
 
 app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('image'))
